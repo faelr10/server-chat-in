@@ -14,15 +14,11 @@ import { IMessageService } from 'src/message/structure';
 export type IMessage = {
   sender: string;
   message: string;
-  email: string;
-};
-export type INewUserConnectData = {
-  user: string;
 };
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.CLIENT_SOCKET_URL,
   },
 })
 export class ChatGateway
@@ -49,22 +45,22 @@ export class ChatGateway
   async handleNewMessage(client: Socket, payload: IMessage): Promise<void> {
     try {
       const newMessage = await this.messageService.newMessage(payload);
+      this.logger.log(`${payload.sender}, sent a new message`);
       this.server.emit('msgToClient', JSON.stringify(newMessage), client.id);
     } catch (error) {
       this.logger.error(`Error handling new message: ${error.message}`);
     }
   }
 
-  // @SubscribeMessage('newUserConnect')
-  // handleNewUserConnect(client: Socket, payload: INewUserConnectData): void {
-  //   //console.log(`${payload.user}, acabou de se juntar à conversa.`);
-  //   this.server.emit(
-  //     'msgToClient',
-  //     `${payload.user}, acabou de se juntar à conversa.`,
-  //   );
-  // }
+  @SubscribeMessage('newUserConnect')
+  handleNewUserConnect(client: Socket, newUser: string): void {
+    this.logger.log(`${newUser}, just joined the conversation.`);
+    this.server.emit(
+      'notifyNewConnect',
+      `${newUser}, acabou de se juntar à conversa.`,
+    );
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   afterInit(server: Server): void {
     this.logger.log('Initialized');
   }

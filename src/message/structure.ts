@@ -1,7 +1,6 @@
 export interface MessageModel {
   sender: string;
   message: string;
-  email: string;
 }
 
 export interface IMessageService {
